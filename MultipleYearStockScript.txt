@@ -1,0 +1,121 @@
+Sub StockMarketAnalysis():
+
+'Loop through all the stocks for one year and output the following information:
+'The ticker symbol.
+'Yearly change from opening price at the beginning of a given year to the closing price at the end of that year.
+'The percent change from opening price at the beginning of a given year to the closing price at the end of that year.
+'The total stock volume of the stock.
+'Conditional formatting that will highlight positive change in green and negative change in red.
+
+
+    'Variable list
+    Dim YearChange As Double
+    Dim PercentChange As Double
+    Dim TotalVol As Double
+    Dim PercIncrease As Double
+    Dim PercDecrease As Double
+    Dim LargestVol As Double
+    Dim r As Long
+    Dim i As Integer
+    Dim TableRow As Double
+    Dim LastRow As Double
+    
+    'Set table headers
+    Range("I1").Value = "Ticker Symbol"
+    Range("J1").Value = "Yearly Change"
+    Range("K1").Value = "Percent Change"
+    Range("L1").Value = "Total Stock Volume"
+    'Secondary table headers
+    Range("N2").Value = "Greatest Percent Increase"
+    Range("N3").Value = "Greatest Percent Decrease"
+    Range("N4").Value = "Largest Stock Volume"
+    Range("P1").Value = "Ticker Symbol"
+    Range("Q1").Value = "Value"
+
+    'Set start values
+    TotalVol = 0
+    TableRow = 2
+    YearChange = 0
+    i = 0
+    LastRow = Range("A" & Rows.Count).End(xlUp).Row
+    
+    For r = 2 To LastRow
+        'When ticker changes:
+       If Cells(r + 1, 1).Value <> Cells(r, 1).Value Then
+            'Add to total
+            TotalVol = TotalVol + Cells(r, 7).Value
+            'Account for zero volume
+            If TotalVol = 0 Then
+                Range("I" & 2 + i).Value = Cells(r, 1).Value
+                Range("J" & 2 + i).Value = 0
+                Range("K" & 2 + i).Value = "%" & 0
+                Range("L" & 2 + i).Value = 0
+                
+            Else
+                'Find first starting value that is NOT zero
+                If Cells(TableRow, 3).Value = 0 Then
+                    For FindFirst = TableRow To r
+                        If Cells(FindFirst, 3).Value <> 0 Then
+                            TableRow = FindFirst
+                            Exit For
+                        End If
+                    Next FindFirst
+                End If
+                
+                'Calculate yearly and percent change
+                YearChange = (Cells(r, 6) - Cells(TableRow, 3))
+                PercentChange = Round((YearChange / Cells(TableRow, 3) * 100), 2)
+                    
+                'Set TableRow for next ticker
+                TableRow = r + 1
+                    
+                'Display results in table
+                Range("I" & i + 2).Value = Cells(r, 1).Value
+                Range("J" & i + 2).Value = Round(YearChange, 2)
+                Range("K" & i + 2).Value = "%" & PercentChange
+                Range("L" & i + 2).Value = TotalVol
+            
+                'Conditional Formating
+                Select Case YearChange
+                    Case Is > 0
+                        Range("J" & 2 + i).Interior.ColorIndex = 4
+                    Case Is < 0
+                        Range("J" & 2 + i).Interior.ColorIndex = 3
+                    Case Else
+                        Range("J" & 2 + i).Interior.ColorIndex = 2
+                End Select
+                
+            End If
+            
+            'Set variables for next ticker
+             TotalVol = 0
+             YearChange = 0
+             i = i + 1
+             
+        'If ticker is the same, add total volume
+        Else
+            TotalVol = TotalVol + Cells(r, 7).Value
+        
+        End If
+           
+    Next r
+    
+    'Secondary table
+    'Calculate the max and min and put them in table
+    Range("Q2") = "%" & WorksheetFunction.Max(Range("K2:K" & LastRow)) * 100
+    Range("Q3") = "%" & WorksheetFunction.Min(Range("K2:K" & LastRow)) * 100
+    Range("Q4") = WorksheetFunction.Max(Range("L2:L" & LastRow))
+    
+    'Set the max/min values in table, accounting for header row
+    PercIncrease = WorksheetFunction.Match(Application.WorksheetFunction.Max(Range("K2:K" & LastRow)), Range("K2:K" & LastRow), 0)
+    PercDecrease = WorksheetFunction.Match(Application.WorksheetFunction.Min(Range("K2:K" & LastRow)), Range("K2:K" & LastRow), 0)
+    LargestVol = WorksheetFunction.Match(Application.WorksheetFunction.Max(Range("L2:L" & LastRow)), Range("L2:L" & LastRow), 0)
+            
+    'Display the ticker symbol that accompanies the max/min value
+    Range("P2").Value = Cells(PercIncrease + 1, 9)
+    Range("P3").Value = Cells(PercDecrease + 1, 9)
+    Range("P4").Value = Cells(LargestVol + 1, 9)
+            
+End Sub
+
+
